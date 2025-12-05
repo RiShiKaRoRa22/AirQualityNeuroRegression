@@ -1,0 +1,22 @@
+venv/
+
+
+
+# Cache
+__pycache__/
+*.pyc
+
+# Raw data
+data/raw/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# VS Code folder
+.vscode/
+
+# Logs
+*.log
+
+data/preprocessed/
