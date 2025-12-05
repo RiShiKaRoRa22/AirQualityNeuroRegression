@@ -1,7 +1,5 @@
 venv/
 
-
-
 # Cache
 __pycache__/
 *.pyc
