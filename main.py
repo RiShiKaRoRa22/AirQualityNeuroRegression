@@ -46,14 +46,6 @@ df.to_csv("./data/preprocessed/station_hour_clean.csv", index=False)   # save
 print("\n Preprocessing done — Cleaned file saved!")'''
 
 #----------------------------REGRESSION MODEL TRAINING -------------------------------------
-import sklearn
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-
-# Load cleaned dataframe
-df = pd.read_csv("./data/preprocessed/station_hour_clean.csv")
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -92,3 +84,58 @@ print("\n===== Regression Performance =====")
 print(f"MAE : {mae:.3f}")
 print(f"RMSE: {rmse:.3f}")
 print(f"R²  : {r2:.3f}")
+
+
+# ---------------- NEURAL NETWORK (Initialized with LR Weights) ----------------
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+import numpy as np
+
+
+# Extract LR weights
+lr_weights = lr.coef_           # shape: (n_features,)
+lr_bias = lr.intercept_         
+
+input_dim = X_train.shape[1]
+
+model = Sequential()
+
+# First dense layer with LR weights (no activation)
+first_layer = Dense(
+    units=1,
+    activation='linear',
+    input_shape=(input_dim,)
+)
+model.add(first_layer)
+
+# Fit LR weights into NN
+W = lr_weights.reshape(input_dim, 1)   # (n_features, output_neuron)
+b = np.array([lr_bias])
+first_layer.set_weights([W, b])
+
+# Add deeper layers for nonlinear learning
+model.add(Dense(64, activation='relu')) #layer 1
+model.add(Dense(64, activation='relu')) #layer2
+model.add(Dense(1, activation='linear')) #last layer-linear, can add more layers if needed
+
+# Compile & train
+model.compile(optimizer='adam', loss='mse', metrics=['mae'])
+history = model.fit(X_train, y_train, epochs=10, validation_split=0.2, verbose=1)
+
+# Evaluate Neural Network
+nn_loss, nn_mae = model.evaluate(X_test, y_test)
+print("\n===== Neural Network Performance =====")
+print(f"MAE : {nn_mae:.3f}")
+print(f"MSE : {nn_loss:.3f}")
+
+#VISULALIZATIONS OF MODEL PERFORMANCE
+
+from src.visualize import plot_training_curve, plot_lr_vs_nn, plot_weight_evolution
+plot_training_curve(history)
+
+
+nn_pred = model.predict(X_test)
+plot_lr_vs_nn(y_test, y_pred, nn_pred)
+
+nn_w, nn_b = model.layers[0].get_weights()
+plot_weight_evolution(lr_weights, nn_w.flatten())
